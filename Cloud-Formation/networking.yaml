@@ -1,0 +1,123 @@
+AWSTemplateFormatVersion: 2010-09-09
+Description: Networking Resources
+Resources:
+  myVPC:
+    Type: AWS::EC2::VPC
+    Properties:
+      CidrBlock: 10.0.0.0/16
+      EnableDnsSupport: true
+      Tags:
+        - Key: keyname
+          Value: value
+
+  publicSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.1.0/24
+      Tags:
+        - Key: keyname
+          Value: value
+
+  publicSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1b"
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.2.0/24
+      Tags:
+        - Key: keyname
+          Value: value
+
+  privateSubnet1:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1a"
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.3.0/24
+      Tags:
+        - Key: keyname
+          Value: value
+
+  privateSubnet2:
+    Type: AWS::EC2::Subnet
+    Properties:
+      AvailabilityZone: "us-east-1b"
+      VpcId: !Ref myVPC
+      CidrBlock: 10.0.4.0/24
+      Tags:
+        - Key: keyname
+          Value: value
+
+  mySG:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupName: mySG
+      GroupDescription: Security group for load balancer
+      VpcId: !Ref myVPC
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+      SecurityGroupEgress:
+        - IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+          CidrIp: 0.0.0.0/0
+
+  myEIP:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  myEIP2:
+    Type: AWS::EC2::EIP
+    Properties:
+      Domain: vpc
+
+  myNATGateway:
+    Type: AWS::EC2::NatGateway
+    Properties:
+         SubnetId: !Ref publicSubnet1
+         AllocationId: !GetAtt myEIP.AllocationId
+
+  myNATGateway2:
+    Type: AWS::EC2::NatGateway
+    Properties:
+         SubnetId: !Ref publicSubnet2
+         AllocationId: !GetAtt myEIP2.AllocationId
+
+  myIGW:
+    Type: AWS::EC2::InternetGateway
+    Properties:
+      Tags:
+        - Key: keyname
+          Value: value
+  
+  attachGateway:
+    Type: AWS::EC2::VPCGatewayAttachment
+    Properties:
+      VpcId: !Ref myVPC
+      InternetGatewayId: !Ref myIGW
+
+  myELB:
+    Type: AWS::ElasticLoadBalancing::LoadBalancer
+    Properties:
+      SecurityGroups:
+        - !Ref mySG
+      Subnets:
+        - !Ref publicSubnet1
+        - !Ref publicSubnet2
+      Listeners:
+        - LoadBalancerPort: 80
+          InstancePort: 8080
+          Protocol: HTTP
+          InstanceProtocol: HTTP
+
+Outputs:
+    privateSubnet1Id:
+      Value: !Ref privateSubnet1
+      Export:
+        Name: privateSubnet1Id

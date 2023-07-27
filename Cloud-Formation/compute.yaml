@@ -1,0 +1,18 @@
+AWSTemplateFormatVersion: 2010-09-09
+
+Parameters:
+  LatestAmiId:
+    Type: 'AWS::SSM::Parameter::Value<AWS::EC2::Image::Id>'
+    Default: '/aws/service/ami-amazon-linux-latest/al2023-ami-minimal-kernel-default-x86_64'
+
+Resources:
+  myEC2Instance:
+    Type: AWS::EC2::Instance
+    Properties:
+      ImageId: !Ref LatestAmiId
+      InstanceType: t2.micro
+      Monitoring: false
+      SubnetId: !ImportValue privateSubnet1Id
+      Tags:
+        - Key: key
+          Value: value
